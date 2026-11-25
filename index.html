@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador DRO · Módulo 1 · COREMUN Puebla</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Librería QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        obsidian: '#0B0B0D',
+                        charcoal: '#141418',
+                        slateDark: '#1E1E24',
+                        gold: {
+                            DEFAULT: '#D4AF37',
+                            light: '#E8C868',
+                            dark: '#AA8A24',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0B0B0D;
+            color: #FFFFFF;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Personalización sutil de scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0B0D;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2C2C35;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D4AF37;
+        }
+        /* Ajuste para el canvas/img generado por qrcodejs */
+        #home-qr-container img,
+        #home-qr-container canvas,
+        #modal-qr-container img,
+        #modal-qr-container canvas {
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-obsidian text-white selection:bg-gold selection:text-obsidian">
+
+    <!-- Barra Superior Fija -->
+    <header class="sticky top-0 z-30 bg-obsidian/90 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-gold/15 border border-gold/40 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div class="truncate">
+                    <span class="text-xs font-bold tracking-wider uppercase text-gold block leading-none">COREMUN Puebla</span>
+                    <span class="text-[11px] text-white/60 truncate block mt-0.5">Curso de Inducción DRO · Módulo 1</span>
+                </div>
+            </div>
+
+            <!-- Botón Modal QR Móvil -->
+            <button type="button" onclick="openQrModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-charcoal hover:bg-slateDark border border-gold/40 text-gold text-xs font-semibold transition active:scale-95 flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                </svg>
+                <span>QR Móvil</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-1 w-full max-w-2xl mx-auto px-4 py-6 flex flex-col justify-center">
+
+        <!-- ==========================================
+             VISTA 1: PANTALLA DE INICIO
+             ========================================== -->
+        <section id="view-home" class="space-y-6">
+            <div class="bg-charcoal border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center relative overflow-hidden">
+                <!-- Destello sutil superior -->
+                <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-48 bg-gold/10 blur-3xl pointer-events-none"></div>
+
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold text-[11px] font-semibold tracking-widest uppercase">
+                    Evaluación Diagnóstica Oficial
+                </div>
+
+                <div class="space-y-2.5">
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Simulador DRO · <span class="text-gold">Módulo 1</span>
+                    </h1>
+                    <p class="text-xs sm:text-sm text-white/70 max-w-md mx-auto leading-relaxed">
+                        Ética, Marco Legal, Proyecto Ejecutivo, Seguridad Estructural y Geotecnia
+                    </p>
+                </div>
+
+                <!-- Tarjeta QR Integrada en Inicio -->
+                <div class="bg-obsidian/80 border border-white/10 rounded-2xl p-5 max-w-xs mx-auto space-y-3.5">
+                    <p class="text-[11px] uppercase tracking-wider text-gold font-semibold">
+                        Escanea para abrir en tu celular
+                    </p>
+                    <div class="bg-white p-3 rounded-xl inline-block shadow-inner">
+                        <div id="home-qr-container" class="w-[148px] h-[148px] flex items-center justify-center"></div>
+                    </div>
+                    <div class="pt-1">
+                        <button type="button" onclick="copyCurrentUrl()" class="w-full py-2 px-3 rounded-xl bg-charcoal hover:bg-slateDark border border-white/15 text-xs font-medium text-white/90 flex items-center justify-center gap-2 transition active:scale-95">
+                            <svg class="w-3.5 h-3.5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>Copiar enlace</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Indicadores del Examen -->
+                <div class="grid grid-cols-3 gap-2.5 text-center pt-1">
+                    <div class="bg-obsidian/60 border border-white/5 rounded-2xl p-3">
+                        <span class="text-base sm:text-lg font-bold text-gold block">20</span>
+                        <span class="text-[10px] uppercase tracking-wider text-white/50">Reactivos</span>
+                    </div>
+                    <div class="bg-obsidian/60 border border-white/5 rounded-2xl p-3">
+                        <span class="text-base sm:text-lg font-bold text-white block">Modo Real</span>
+                        <span class="text-[10px] uppercase tracking-wider text-white/50">Nota al final</span>
+                    </div>
+                    <div class="bg-obsidian/60 border border-white/5 rounded-2xl p-3">
+                        <span class="text-base sm:text-lg font-bold text-gold block">COREMUN</span>
+                        <span class="text-[10px] uppercase tracking-wider text-white/50">Fundamento</span>
+                    </div>
+                </div>
+
+                <!-- Botón Principal de Inicio -->
+                <button type="button" onclick="startQuiz(false)" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-obsidian font-bold text-sm sm:text-base shadow-lg shadow-gold/20 hover:brightness-105 transition active:scale-[0.99] flex items-center justify-center gap-2">
+                    <span>Iniciar Simulador (20 Reactivos)</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             VISTA 2: SIMULADOR EN CURSO
+             ========================================== -->
+        <section id="view-quiz" class="hidden space-y-4">
+            <!-- Barra de Progreso y Estado -->
+            <div class="bg-charcoal border border-white/10 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between text-xs">
+                    <span id="question-counter" class="font-bold text-white">
+                        Pregunta <span class="text-gold">1</span> de 20
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <span id="question-mode-tag" class="hidden px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-semibold">
+                            Repaso
+                        </span>
+                        <span id="score-badge" class="px-2.5 py-0.5 rounded-full bg-gold/15 border border-gold/30 text-gold font-semibold text-[11px]">
+                            Respondidas: 0 / 20
+                        </span>
+                    </div>
+                </div>
+                <!-- Línea de progreso -->
+                <div class="w-full h-1.5 bg-obsidian rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-gold-dark to-gold transition-all duration-300 rounded-full" style="width: 5%"></div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Pregunta y Opciones -->
+            <div class="bg-charcoal border border-white/10 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-obsidian border border-white/10">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+                    <span id="question-topic" class="text-[11px] font-semibold uppercase tracking-wider text-gold">
+                        Área Normativa
+                    </span>
+                </div>
+
+                <h2 id="question-text" class="text-base sm:text-lg font-semibold text-white leading-snug">
+                    Cargando pregunta...
+                </h2>
+
+                <!-- Contenedor de Opciones A, B, C, D -->
+                <div id="options-container" class="space-y-2.5 pt-1">
+                    <!-- Inyectado dinámicamente por JS -->
+                </div>
+            </div>
+
+            <!-- Controles de Navegación Táctil -->
+            <div class="flex items-center gap-3 pt-1">
+                <button type="button" id="btn-prev" onclick="prevQuestion()" disabled class="px-4 py-3.5 rounded-2xl bg-charcoal border border-white/10 text-white/80 font-semibold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none hover:border-white/25 transition active:scale-95 flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Anterior</span>
+                </button>
+
+                <button type="button" id="btn-next" onclick="nextQuestion()" disabled class="flex-1 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-obsidian font-bold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none shadow-lg shadow-gold/15 transition active:scale-[0.99] flex items-center justify-center gap-2">
+                    <span id="btn-next-label">Selecciona una opción</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             VISTA 3: RESULTADOS Y REVISIÓN FINAL
+             ========================================== -->
+        <section id="view-results" class="hidden space-y-5 pb-8">
+            <!-- Tarjeta de Calificación Global -->
+            <div class="bg-charcoal border border-gold/30 rounded-3xl p-6 sm:p-7 text-center space-y-4 shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-56 h-40 bg-gold/15 blur-3xl pointer-events-none"></div>
+
+                <span class="inline-block px-3 py-1 rounded-full bg-gold/15 border border-gold/30 text-gold text-[11px] font-bold uppercase tracking-widest">
+                    Resultado Oficial · Módulo 1
+                </span>
+
+                <div class="py-2">
+                    <div id="final-percentage" class="text-5xl sm:text-6xl font-extrabold text-gold tracking-tight">
+                        0%
+                    </div>
+                    <div id="final-fraction" class="text-sm font-medium text-white/70 mt-1">
+                        0 / 20 aciertos
+                    </div>
+                </div>
+
+                <div class="space-y-1 max-w-md mx-auto">
+                    <h2 id="final-grade-title" class="text-lg sm:text-xl font-bold text-white">
+                        Diagnóstico
+                    </h2>
+                    <p id="final-grade-desc" class="text-xs sm:text-sm text-white/70 leading-relaxed">
+                        Descripción del resultado.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Desglose por Área Temática -->
+            <div class="bg-charcoal border border-white/10 rounded-2xl p-5 space-y-3.5">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-gold border-b border-white/10 pb-2">
+                    Desglose por Área Normativa
+                </h3>
+                <div id="topic-breakdown" class="space-y-3">
+                    <!-- Inyectado dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Botones de Acción Final -->
+            <div class="space-y-2.5">
+                <button type="button" id="btn-retry-wrong" onclick="startQuiz(true)" class="hidden w-full py-3.5 px-5 rounded-2xl bg-charcoal hover:bg-slateDark border border-gold/50 text-gold font-bold text-xs sm:text-sm transition active:scale-[0.99] flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span id="retry-wrong-label">Repasar preguntas falladas</span>
+                </button>
+
+                <button type="button" onclick="startQuiz(false)" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-obsidian font-bold text-xs sm:text-sm shadow-lg shadow-gold/15 transition active:scale-[0.99] flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Reiniciar Examen Completo</span>
+                </button>
+            </div>
+
+            <!-- Revisión Detallada de Preguntas y Fundamentos Normativos -->
+            <div class="bg-charcoal border border-white/10 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gold">
+                        Revisión Detallada y Fundamento Legal
+                    </h3>
+                    <span id="review-count-badge" class="text-[10px] text-white/50">20 Reactivos</span>
+                </div>
+                <div id="detailed-review-list" class="space-y-3.5">
+                    <!-- Inyectado dinámicamente al finalizar -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==========================================
+         MODAL CÓDIGO QR MÓVIL
+         ========================================== -->
+    <div id="qr-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-charcoal border border-gold/40 rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl relative">
+            <button type="button" onclick="closeQrModal()" aria-label="Cerrar modal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-obsidian border border-white/10 text-white/70 hover:text-white flex items-center justify-center transition">
+                ✕
+            </button>
+
+            <div class="space-y-1 pt-1">
+                <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Acceso Rápido</span>
+                <h3 class="text-base font-bold text-white">Abrir en tu Celular</h3>
+                <p class="text-xs text-white/65">Escanea el código con la cámara de tu smartphone</p>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-2xl inline-block shadow-md">
+                <div id="modal-qr-container" class="w-[180px] h-[180px] flex items-center justify-center"></div>
+            </div>
+
+            <button type="button" onclick="copyCurrentUrl()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-obsidian font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+                <span>Copiar enlace</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Notificación Toast (sin alert) -->
+    <div id="toast-msg" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-gold text-obsidian font-bold text-xs shadow-xl opacity-0 pointer-events-none transition-opacity duration-300">
+        Enlace copiado al portapapeles
+    </div>
+
+    <!-- ==========================================
+         LÓGICA DE LA APLICACIÓN (JAVASCRIPT)
+         ========================================== -->
+    <script>
+        // Banco Completo de 20 Preguntas - Módulo 1 (COREMUN Puebla)
+        const QUESTIONS_DB = [
+            {
+                id: 1,
+                topic: "Ética y Marco Legal",
+                question: "De acuerdo con el Artículo 673 del COREMUN, ¿cuáles son las bases normativas y disposiciones que debe contener el curso de inducción para DRO y Corresponsable?",
+                options: [
+                    { key: "A", text: "Exclusivamente el Reglamento de Construcciones Federal y el Código Civil del Estado." },
+                    { key: "B", text: "Marco Legal sobre Asentamientos Humanos/Construcciones, Estructura Orgánica, Catálogo de servicios, Requisitos para cada trámite y Ética profesional." },
+                    { key: "C", text: "Únicamente las Normas Técnicas Complementarias de Sismo, Cimentaciones y Viento." },
+                    { key: "D", text: "El Código Penal del Estado, el Reglamento de Tránsito y el Catálogo de Precios Unitarios." }
+                ],
+                correct: "B",
+                reference: "Ética Profesional y Equidad de Género (Pág. 3 — COREMUN Art. 673)"
+            },
+            {
+                id: 2,
+                topic: "Ética y Marco Legal",
+                question: "Dentro de las tres ramas de la ética planteadas por el filósofo J. Fieser, ¿qué estudia la \"Ética Aplicada\"?",
+                options: [
+                    { key: "A", text: "El origen metafísico y psicológico de los conceptos morales." },
+                    { key: "B", text: "El cultivo de la virtud como fin en sí mismo por medio de los buenos hábitos." },
+                    { key: "C", text: "Las cuestiones éticas llevadas a situaciones concretas y controversiales basándose en principios normativos." },
+                    { key: "D", text: "La relación coste-beneficio entre las acciones y sus consecuencias económicas." }
+                ],
+                correct: "C",
+                reference: "Ética Profesional y Equidad de Género (Pág. 7 — Ética Aplicada)"
+            },
+            {
+                id: 3,
+                topic: "Ética y Marco Legal",
+                question: "En materia de profesionalismo, ¿cómo se define el atributo de \"Objetividad\"?",
+                options: [
+                    { key: "A", text: "La rectitud honorable de la veracidad, lealtad y respeto en las relaciones de negocios." },
+                    { key: "B", text: "La imparcialidad consciente para evitar prejuicios, conflictos de interés o influencia indebida de terceros que afecten el juicio profesional." },
+                    { key: "C", text: "Respetar la confianza depositada en reserva de la información obtenida en el trabajo." },
+                    { key: "D", text: "El proceder con prudencia en el cumplimiento reglamentario para evitar desacreditar a la profesión." }
+                ],
+                correct: "B",
+                reference: "Ética Profesional y Equidad de Género (Pág. 19 — Profesionalismo: Objetividad)"
+            },
+            {
+                id: 4,
+                topic: "Ética y Marco Legal",
+                question: "En materia de Derechos Humanos y Equidad de Género, ¿qué es la \"Perspectiva de Género\"?",
+                options: [
+                    { key: "A", text: "Las características biológicas, cromosómicas y hormonales que se tienen desde el nacimiento." },
+                    { key: "B", text: "El principio constitucional que dicta que hombres y mujeres tienen los mismos derechos ante la ley." },
+                    { key: "C", text: "Una herramienta de análisis que busca mejorar las condiciones de vida de los diferentes géneros y redistribuir equitativamente actividades y oportunidades." },
+                    { key: "D", text: "La prohibición legal de negar oportunidades laborales por motivos de identidad." }
+                ],
+                correct: "C",
+                reference: "Ética Profesional y Equidad de Género (Págs. 25-26 — Perspectiva de Género)"
+            },
+            {
+                id: 5,
+                topic: "Origen y Responsabilidad del DRO",
+                question: "¿Cuál es el evento histórico en México que evidenció la falta de personal calificado y detonó el endurecimiento y profesionalización definitiva de la figura del Director Responsable de Obra (DRO)?",
+                options: [
+                    { key: "A", text: "La publicación de la Ley de Profesiones en 1942." },
+                    { key: "B", text: "Los sismos del 19 de septiembre de 1985 en la Ciudad de México." },
+                    { key: "C", text: "La creación del padrón de Constructores Responsables en 1920." },
+                    { key: "D", text: "La implementación de la Bitácora Electrónica Federal en 2009." }
+                ],
+                correct: "B",
+                reference: "Origen del DRO 2026 (Págs. 4, 12 y 56 — Sismo del 19 de septiembre de 1985)"
+            },
+            {
+                id: 6,
+                topic: "Origen y Responsabilidad del DRO",
+                question: "¿Cuáles son los tres ámbitos legales que conforman la \"Triada de Responsabilidad\" del Director Responsable de Obra?",
+                options: [
+                    { key: "A", text: "Laboral, Mercantil y Fiscal." },
+                    { key: "B", text: "Administrativa, Civil y Penal." },
+                    { key: "C", text: "Constitucional, Municipal y Ambiental." },
+                    { key: "D", text: "Contractual, Gremial y Técnica." }
+                ],
+                correct: "B",
+                reference: "Origen del DRO 2026 (Pág. 16 — La Triada de Responsabilidad)"
+            },
+            {
+                id: 7,
+                topic: "Origen y Responsabilidad del DRO",
+                question: "Según el Artículo 679 (inciso VI) y el Artículo 1149 (fracción III) del COREMUN, ¿con qué frecuencia mínima debe visitar la obra el DRO para registrar sus anotaciones en la bitácora?",
+                options: [
+                    { key: "A", text: "Una vez al mes o al término de cada etapa estructural." },
+                    { key: "B", text: "Dos veces por semana." },
+                    { key: "C", text: "Únicamente al inicio (trazo) y al cierre (terminación de obra)." },
+                    { key: "D", text: "Diario, durante toda la jornada laboral." }
+                ],
+                correct: "B",
+                reference: "Origen del DRO 2026 (Pág. 38 — COREMUN Art. 1149, frac. III, inciso a)"
+            },
+            {
+                id: 8,
+                topic: "Origen y Responsabilidad del DRO",
+                question: "De acuerdo con el Artículo 1159 del COREMUN, ¿cómo se debe llevar la bitácora de obra en el Municipio de Puebla?",
+                options: [
+                    { key: "A", text: "Libro encuadernado y foliado para obras menores, y Bitácora Electrónica para todas las obras mayores." },
+                    { key: "B", text: "Exclusivamente en formato digital a través de la plataforma federal BESOP." },
+                    { key: "C", text: "En hojas sueltas firmadas por el contratista y el propietario para cualquier tipo de obra." },
+                    { key: "D", text: "Libro encuadernado únicamente para obra pública y formato libre para obra privada." }
+                ],
+                correct: "A",
+                reference: "Origen del DRO 2026 (Págs. 38-39 — COREMUN Art. 1159, fracc. I y II)"
+            },
+            {
+                id: 9,
+                topic: "Proyecto Ejecutivo y BIM",
+                question: "Según el Artículo 915 del COREMUN, ¿qué elementos obligatorios debe incluir la solapa (cajetín) de todos los planos del proyecto?",
+                options: [
+                    { key: "A", text: "Únicamente el nombre del propietario y el presupuesto estimado." },
+                    { key: "B", text: "La localización y el cuadro de áreas." },
+                    { key: "C", text: "El calendario de obra y la lista de proveedores." },
+                    { key: "D", text: "El número de bitácora electrónica y el recibo de pago de derechos." }
+                ],
+                correct: "B",
+                reference: "Proyecto Ejecutivo (Arquitectónico) (Págs. 3 y 5 — COREMUN Art. 915)"
+            },
+            {
+                id: 10,
+                topic: "Proyecto Ejecutivo y BIM",
+                question: "De acuerdo con el Artículo 1091 del COREMUN, ¿en qué formato impreso y digital deben entregarse los planos para obtener una Licencia de Construcción de Obra Mayor?",
+                options: [
+                    { key: "A", text: "Formato doble carta y archivo PDF sin capas." },
+                    { key: "B", text: "Formato 90x60 cm (2 juegos impresos) y en archivo DWG, debidamente firmados por el DRO y Corresponsables." },
+                    { key: "C", text: "Formato 60x45 cm (1 juego) y archivo JPG." },
+                    { key: "D", text: "Únicamente en modelo tridimensional IFC sin planos impresos." }
+                ],
+                correct: "B",
+                reference: "Proyecto Ejecutivo (Arquitectónico) (Pág. 11 — COREMUN Art. 1091, frac. II)"
+            },
+            {
+                id: 11,
+                topic: "Proyecto Ejecutivo y BIM",
+                question: "En la metodología de gestión de información BIM y Proyecto Ejecutivo, ¿qué representan las siglas CDE, IFC y BCF respectivamente?",
+                options: [
+                    { key: "A", text: "Código de Edificación, Informe Final de Construcción y Bitácora de Control Físico." },
+                    { key: "B", text: "Entorno Común de Datos, formato estandarizado de intercambio de información e Incidencias vinculadas a elementos/vistas." },
+                    { key: "C", text: "Control de Diseño Estructural, Ingeniería de Factibilidad y Cálculo de Fuerzas." },
+                    { key: "D", text: "Certificado de Desarrollo Ejecutivo, Índice de Fallas Constructivas y Base de Costos Fijos." }
+                ],
+                correct: "B",
+                reference: "Proyecto Ejecutivo: Uso de Nuevas Tecnologías (Págs. 30-31 — CDE y openBIM)"
+            },
+            {
+                id: 12,
+                topic: "Seguridad Estructural",
+                question: "Según el Artículo 684 del COREMUN, ¿cuánto tiempo dura la responsabilidad administrativa del DRO y de los Corresponsables después de concluida la obra?",
+                options: [
+                    { key: "A", text: "1 año a partir de la última nota en bitácora." },
+                    { key: "B", text: "5 años contados a partir de la fecha en que la Dirección expida la constancia de terminación de obra." },
+                    { key: "C", text: "10 años a partir de la emisión de la Licencia de Construcción." },
+                    { key: "D", text: "Termina inmediatamente el día en que concluye el contrato de prestación de servicios con el propietario." }
+                ],
+                correct: "B",
+                reference: "Corresponsable en Seguridad Estructural (Págs. 7 y 19 — COREMUN Art. 684)"
+            },
+            {
+                id: 13,
+                topic: "Seguridad Estructural",
+                question: "¿Cuál es el principio fundamental de independencia técnica que rige la actuación del Corresponsable en Seguridad Estructural (CSE)?",
+                options: [
+                    { key: "A", text: "El CSE debe ser obligatoriamente el mismo ingeniero que calculó y diseñó la estructura." },
+                    { key: "B", text: "El CSE no debe ser proyectista del mismo edificio, para evitar conflictos de interés y autorrevisión." },
+                    { key: "C", text: "El CSE actúa únicamente como gestor administrativo ante la Dirección de Desarrollo Urbano." },
+                    { key: "D", text: "El CSE solo revisa la obra si el propietario solicita un peritaje judicial." }
+                ],
+                correct: "B",
+                reference: "Corresponsable en Seguridad Estructural (Pág. 14 — Independencia Técnica del CSE)"
+            },
+            {
+                id: 14,
+                topic: "Seguridad Estructural",
+                question: "De acuerdo con el Artículo 680 del COREMUN, ¿en cuál de los siguientes casos del Grupo B1 se exige obligatoriamente la responsiva de un Corresponsable en Seguridad Estructural (CSE)?",
+                options: [
+                    { key: "A", text: "Viviendas unifamiliares de hasta 2 niveles y 150 m² en Zona I." },
+                    { key: "B", text: "Edificaciones de más de 30 m de altura habitable en zonas I y II (o más de 15 m en zona III), o edificios públicos con salas de reunión para más de 200 personas simultáneamente." },
+                    { key: "C", text: "Bardas perimetrales menores a 2.50 m de altura." },
+                    { key: "D", text: "Remodelaciones interiores que no afecten muros de carga ni instalaciones." }
+                ],
+                correct: "B",
+                reference: "Corresponsable en Seguridad Estructural (Pág. 12 — COREMUN Art. 680, Grupo B1)"
+            },
+            {
+                id: 15,
+                topic: "Seguridad Estructural",
+                question: "Según el Artículo 969 del COREMUN, ¿qué principio normativo debe respetarse al utilizar normas técnicas o códigos reconocidos para el diseño estructural?",
+                options: [
+                    { key: "A", text: "Se deben combinar los factores de carga del código estadounidense con las resistencias del código mexicano para mayor seguridad." },
+                    { key: "B", text: "No se deben mezclar normas o códigos distintos dentro de un mismo diseño estructural, para evitar inconsistencias en los niveles de seguridad." },
+                    { key: "C", text: "Es opcional aplicar normas técnicas si la edificación tiene menos de 4 niveles." },
+                    { key: "D", text: "Se deben aplicar exclusivamente normas europeas para estructuras de acero." }
+                ],
+                correct: "B",
+                reference: "Corresponsable en Seguridad Estructural (Pág. 18 — COREMUN Art. 969)"
+            },
+            {
+                id: 16,
+                topic: "Geotecnia y Cimentaciones",
+                question: "Conforme al Artículo 672 (fracción VIII, inciso h) del COREMUN, ¿qué requisito académico y de experiencia específico se exige para obtener el registro como Corresponsable en Geotecnia?",
+                options: [
+                    { key: "A", text: "Licenciatura en Ingeniería Civil o Arquitectura con 1 año de experiencia en topografía." },
+                    { key: "B", text: "Título de Ingeniero Civil, Arquitecto o afín, más posgrado en el área de geotecnia o mecánica de suelos, computando la experiencia a partir de la emisión del título y cédula de maestría." },
+                    { key: "C", text: "Únicamente carta de pasante y constancia de trabajo en laboratorio de materiales." },
+                    { key: "D", text: "Cualquier posgrado en administración de la construcción." }
+                ],
+                correct: "B",
+                reference: "Corresponsable en Geotecnia (Págs. 4-5 — COREMUN Art. 672, frac. VIII, inciso h)"
+            },
+            {
+                id: 17,
+                topic: "Geotecnia y Cimentaciones",
+                question: "De acuerdo con el Artículo 680 (fracción VIII) del COREMUN, ¿cuál de las siguientes obras requiere obligatoriamente la responsiva de un Corresponsable en Geotecnia?",
+                options: [
+                    { key: "A", text: "Cimentaciones superficiales en terreno firme (Tipo I) de un solo nivel." },
+                    { key: "B", text: "Inmuebles o estructuras de 4 o más niveles, muros de contención de más de 2 m de altura, o excavaciones con cortes a cielo abierto de más de 3 m de profundidad." },
+                    { key: "C", text: "Cisternas prefabricadas de menos de 5,000 litros." },
+                    { key: "D", text: "Pavimentación de senderos peatonales en parques públicos." }
+                ],
+                correct: "B",
+                reference: "Corresponsable en Geotecnia (Págs. 7-8 — COREMUN Art. 680, frac. VIII, incisos h, k, l)"
+            },
+            {
+                id: 18,
+                topic: "Geotecnia y Cimentaciones",
+                question: "Según el Artículo 1009 del COREMUN, ¿cómo se clasifica geotécnicamente un terreno \"Tipo III\" en el área urbana del valle de Puebla?",
+                options: [
+                    { key: "A", text: "Roca (basalto, andesita, caliza) o suelos de consistencia muy firme a dura." },
+                    { key: "B", text: "Suelos de consistencia media a firme o depósitos arenosos de compacidad media." },
+                    { key: "C", text: "Suelos de consistencia muy blanda a blanda para limos y arcillas, o depósitos arenosos sueltos (depósitos lacustres, palustres y aluviales)." },
+                    { key: "D", text: "Rellenos artificiales de escombro y tierra vegetal sin compactar." }
+                ],
+                correct: "C",
+                reference: "Corresponsable en Geotecnia (Págs. 17 y 40 — COREMUN Art. 1009, inciso c)"
+            },
+            {
+                id: 19,
+                topic: "Geotecnia y Cimentaciones",
+                question: "De acuerdo con las Normas Técnicas para Diseño y Construcción de Cimentaciones del Municipio de Puebla, ¿cuál es el número mínimo de exploraciones (pozos a cielo abierto y/o sondeos) que deben realizarse en un predio?",
+                options: [
+                    { key: "A", text: "Una exploración por cada 80 m o fracción del perímetro o envolvente de mínima extensión de la superficie cubierta por la construcción." },
+                    { key: "B", text: "Un pozo a cielo abierto en el centro del terreno sin importar el tamaño del predio." },
+                    { key: "C", text: "Tres sondeos profundos obligatorios para cualquier casa habitación." },
+                    { key: "D", text: "Una exploración por cada 500 m² de área libre." }
+                ],
+                correct: "A",
+                reference: "Corresponsable en Geotecnia (Pág. 54 — Requisitos mínimos para la investigación del subsuelo)"
+            },
+            {
+                id: 20,
+                topic: "Proyecto Estructural",
+                question: "En el diseño estructural de naves industriales de acero, ¿cuál es la diferencia funcional entre los \"contraflambeos\" y los \"contraventeos\"?",
+                options: [
+                    { key: "A", text: "Ambos se fabrican exclusivamente con placas de concreto y sirven para soportar la cimentación." },
+                    { key: "B", text: "Los contraflambeos funcionan como montantes (generalmente ángulos) que reducen la longitud de pandeo en el eje débil de los largueros, mientras que los contraventeos funcionan como diagonales (varillas en X a tensión) que dan restricción lateral perpendicular a los marcos." },
+                    { key: "C", text: "Los contraventeos se colocan solo en la cimentación y los contraflambeos en las puertas de acceso." },
+                    { key: "D", text: "Los contraflambeos trabajan únicamente a tensión y los contraventeos únicamente a compresión." }
+                ],
+                correct: "B",
+                reference: "Proyecto Estructural 2026 (Págs. 69-70 — Arriostramientos: Contraflambeos y Contraventeos)"
+            }
+        ];
+
+        // Estado del Simulador
+        let activeQuestions = [];
+        let currentIndex = 0;
+        let userAnswers = {};
+        let isRetryMode = false;
+
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            initQRCodes();
+        });
+
+        // Generar Códigos QR (en pantalla de inicio y en modal)
+        function initQRCodes() {
+            const currentUrl = window.location.href;
+            const homeContainer = document.getElementById('home-qr-container');
+            const modalContainer = document.getElementById('modal-qr-container');
+
+            if (homeContainer && typeof QRCode !== 'undefined') {
+                homeContainer.innerHTML = '';
+                new QRCode(homeContainer, {
+                    text: currentUrl,
+                    width: 148,
+                    height: 148,
+                    colorDark: "#0B0B0D",
+                    colorLight: "#FFFFFF",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+
+            if (modalContainer && typeof QRCode !== 'undefined') {
+                modalContainer.innerHTML = '';
+                new QRCode(modalContainer, {
+                    text: currentUrl,
+                    width: 180,
+                    height: 180,
+                    colorDark: "#0B0B0D",
+                    colorLight: "#FFFFFF",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+        }
+
+        // Control Modal QR
+        function openQrModal() {
+            const modal = document.getElementById('qr-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeQrModal() {
+            const modal = document.getElementById('qr-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Copiar enlace al portapapeles (compatible con iframes)
+        function copyCurrentUrl() {
+            const url = window.location.href;
+            const tempInput = document.createElement('input');
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast("Enlace copiado al portapapeles");
+            } catch (err) {
+                showToast("No se pudo copiar automáticamente");
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast-msg');
+            toast.textContent = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2400);
+        }
+
+        // Cambiar entre vistas
+        function switchView(viewId) {
+            ['view-home', 'view-quiz', 'view-results'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Iniciar o Reiniciar Simulador
+        function startQuiz(retryWrongOnly) {
+            isRetryMode = retryWrongOnly;
+
+            if (retryWrongOnly) {
+                const missed = activeQuestions.filter(q => userAnswers[q.id] !== q.correct);
+                if (missed.length === 0) return;
+                activeQuestions = missed;
+            } else {
+                activeQuestions = [...QUESTIONS_DB];
+            }
+
+            userAnswers = {};
+            currentIndex = 0;
+            switchView('view-quiz');
+            renderQuestion();
+        }
+
+        // Renderizar pregunta actual (Modo Examen Real: sin revelar respuesta hasta finalizar)
+        function renderQuestion() {
+            const q = activeQuestions[currentIndex];
+            const total = activeQuestions.length;
+            const selectedOption = userAnswers[q.id];
+
+            // Actualizar encabezado y progreso
+            document.getElementById('question-counter').innerHTML = `Pregunta <span class="text-gold">${currentIndex + 1}</span> de ${total}`;
+            document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / total) * 100}%`;
+            document.getElementById('question-topic').textContent = q.topic;
+
+            const modeTag = document.getElementById('question-mode-tag');
+            if (isRetryMode) modeTag.classList.remove('hidden');
+            else modeTag.classList.add('hidden');
+
+            updateAnsweredBadge();
+
+            // Texto de pregunta
+            document.getElementById('question-text').textContent = `${q.id}. ${q.question}`;
+
+            // Renderizar opciones (resaltando únicamente la opción seleccionada en dorado elegante)
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                const isSelected = selectedOption === opt.key;
+
+                let baseClasses = "w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all flex items-start gap-3 focus:outline-none active:scale-[0.99] ";
+                let badgeClasses = "w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold border transition-colors ";
+
+                if (isSelected) {
+                    baseClasses += "bg-gold/15 border-gold text-white shadow-md shadow-gold/10";
+                    badgeClasses += "bg-gold border-gold text-obsidian";
+                } else {
+                    baseClasses += "bg-obsidian/70 border-white/10 hover:border-gold/50 hover:bg-white/[0.03] text-white/90";
+                    badgeClasses += "bg-charcoal border-white/20 text-gold";
+                }
+
+                btn.className = baseClasses;
+                btn.innerHTML = `
+                    <span class="${badgeClasses}">${opt.key}</span>
+                    <span class="text-xs sm:text-sm leading-relaxed pt-0.5">${opt.text}</span>
+                `;
+
+                btn.onclick = () => selectAnswer(opt.key);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Actualizar botones de navegación
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnNextLabel = document.getElementById('btn-next-label');
+
+            btnPrev.disabled = currentIndex === 0;
+
+            if (selectedOption) {
+                btnNext.disabled = false;
+                btnNextLabel.textContent = (currentIndex === total - 1) ? "Finalizar y Calificar" : "Siguiente Pregunta";
+            } else {
+                btnNext.disabled = true;
+                btnNextLabel.textContent = "Selecciona una opción";
+            }
+        }
+
+        // Registrar o actualizar respuesta del usuario sin mostrar resultado inmediato
+        function selectAnswer(optionKey) {
+            const q = activeQuestions[currentIndex];
+            userAnswers[q.id] = optionKey;
+            renderQuestion();
+        }
+
+        function updateAnsweredBadge() {
+            const answeredCount = activeQuestions.filter(q => Boolean(userAnswers[q.id])).length;
+            document.getElementById('score-badge').textContent = `Respondidas: ${answeredCount} / ${activeQuestions.length}`;
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIndex < activeQuestions.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // Pantalla Final de Resultados con Revisión Detallada y Fundamento Normativo
+        function showResults() {
+            const total = activeQuestions.length;
+            let correctCount = 0;
+            const topicStats = {};
+
+            activeQuestions.forEach(q => {
+                if (!topicStats[q.topic]) {
+                    topicStats[q.topic] = { total: 0, correct: 0 };
+                }
+                topicStats[q.topic].total++;
+
+                if (userAnswers[q.id] === q.correct) {
+                    correctCount++;
+                    topicStats[q.topic].correct++;
+                }
+            });
+
+            const percentage = Math.round((correctCount / total) * 100);
+            document.getElementById('final-percentage').textContent = `${percentage}%`;
+            document.getElementById('final-fraction').textContent = `${correctCount} / ${total} aciertos`;
+            document.getElementById('review-count-badge').textContent = `${total} Reactivo${total > 1 ? 's' : ''}`;
+
+            const titleEl = document.getElementById('final-grade-title');
+            const descEl = document.getElementById('final-grade-desc');
+
+            if (percentage >= 90) {
+                titleEl.textContent = "Dominio Sobresaliente";
+                descEl.textContent = "Excelente preparación normativa y técnica conforme al COREMUN de Puebla.";
+            } else if (percentage >= 80) {
+                titleEl.textContent = "Aprobado · Buen Nivel";
+                descEl.textContent = "Cumples con el estándar esperado para la acreditación del Módulo 1.";
+            } else if (percentage >= 60) {
+                titleEl.textContent = "En Proceso de Consolidación";
+                descEl.textContent = "Te recomendamos repasar los artículos específicos donde tuviste fallos.";
+            } else {
+                titleEl.textContent = "Requiere Reforzamiento";
+                descEl.textContent = "Revisa las referencias del COREMUN en cada reactivo e inténtalo nuevamente.";
+            }
+
+            // Renderizar desglose por área temática
+            const breakdownEl = document.getElementById('topic-breakdown');
+            breakdownEl.innerHTML = '';
+
+            Object.keys(topicStats).forEach(topic => {
+                const stat = topicStats[topic];
+                const pct = Math.round((stat.correct / stat.total) * 100);
+                const row = document.createElement('div');
+                row.className = "space-y-1";
+                row.innerHTML = `
+                    <div class="flex justify-between text-xs">
+                        <span class="text-white/85 font-medium">${topic}</span>
+                        <span class="text-gold font-semibold">${stat.correct}/${stat.total} (${pct}%)</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-obsidian rounded-full overflow-hidden">
+                        <div class="h-full bg-gold rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                `;
+                breakdownEl.appendChild(row);
+            });
+
+            // Renderizar revisión detallada de cada reactivo al finalizar
+            const reviewListEl = document.getElementById('detailed-review-list');
+            reviewListEl.innerHTML = '';
+
+            activeQuestions.forEach(q => {
+                const userKey = userAnswers[q.id];
+                const isCorrect = userKey === q.correct;
+                const userOptObj = q.options.find(o => o.key === userKey);
+                const correctOptObj = q.options.find(o => o.key === q.correct);
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border space-y-2.5 ${
+                    isCorrect 
+                        ? 'bg-emerald-950/25 border-emerald-500/35' 
+                        : 'bg-rose-950/25 border-rose-500/35'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10px] uppercase tracking-wider text-gold font-semibold">${q.topic}</span>
+                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                            isCorrect 
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                        }">
+                            ${isCorrect ? '✓ Correcta' : '✕ Incorrecta'}
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm font-medium text-white leading-snug">
+                        ${q.id}. ${q.question}
+                    </p>
+                    <div class="space-y-1.5 text-xs pt-1">
+                        <div class="p-2.5 rounded-lg bg-obsidian/70 border border-white/5">
+                            <span class="text-white/50 block text-[10px] uppercase tracking-wider mb-0.5">Tu respuesta:</span>
+                            <span class="${isCorrect ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}">
+                                ${userOptObj ? `${userOptObj.key}) ${userOptObj.text}` : 'Sin responder'}
+                            </span>
+                        </div>
+                        ${!isCorrect ? `
+                        <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30">
+                            <span class="text-emerald-300/70 block text-[10px] uppercase tracking-wider mb-0.5">Respuesta correcta:</span>
+                            <span class="text-emerald-300 font-medium">
+                                ${correctOptObj.key}) ${correctOptObj.text}
+                            </span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <p class="text-[11px] text-white/75 leading-relaxed pt-1 border-t border-white/10">
+                        <strong class="text-gold font-semibold">Fundamento:</strong> ${q.reference}
+                    </p>
+                `;
+                reviewListEl.appendChild(card);
+            });
+
+            // Botón de repaso de preguntas falladas
+            const wrongCount = total - correctCount;
+            const retryBtn = document.getElementById('btn-retry-wrong');
+            if (wrongCount > 0) {
+                retryBtn.classList.remove('hidden');
+                document.getElementById('retry-wrong-label').textContent = `Repasar ${wrongCount} pregunta${wrongCount > 1 ? 's' : ''} fallada${wrongCount > 1 ? 's' : ''}`;
+            } else {
+                retryBtn.classList.add('hidden');
+            }
+
+            switchView('view-results');
+        }
+    </script>
+</body>
+</html>
